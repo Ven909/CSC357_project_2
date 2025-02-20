@@ -1,3 +1,11 @@
+/*
+
+ADD comments:
+1. above function briefly describing it
+2. also for each KEY line of code
+
+*/
+
 #ifndef FILESYSTEM_H
 #define FILESYSTEM_H
 
@@ -5,6 +13,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <fcntl.h>
 
 #define MAX_INODES 1024
 #define NAME_SIZE 32

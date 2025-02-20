@@ -1,7 +1,18 @@
+/*
+
+ADD comments:
+1. above function briefly describing it
+2. also for each KEY line of code
+
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdint.h>
+#include <string.h>
+#include <fcntl.h>
+
+// when you add this, ^^^^ arent needed
 #include "task1.h"
 
 Inode inodeList[MAX_INODES];
