@@ -1,65 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
+#include <stdint.h>
+#include "task1.h"
 
-#define MAX_INODES 1024
-#define NAME_SIZE 32
-
-typedef struct {
-    uint32_t inode;
-    uint32_t parentInode;
-    char type; 
-    char name[NAME_SIZE];
-} Inode;
-
-Inode inodeList[MAX_INODES];  
-size_t inodeCount = 0;  
-uint32_t currentInode = 0;  
-
-void loadInodeList(const char *path);
-void saveInodeList(const char *path);
-void changeDirectory(const char *name);
-void listContents();
-void createDirectory(const char *name);
-void createFile(const char *name);
-void trimNewline(char *str);
-
-int main(int argc, char *argv[]) {
-    if (argc != 2) {
-        printf("Usage: %s <filesystem_directory>\n", argv[0]);
-        return 1;
-    }
-
-    const char *fsPath = argv[1];
-    chdir(fsPath);
-
-    loadInodeList("inodes_list");
-
-    char command[64];
-    while (1) {
-        printf("> ");
-        if (!fgets(command, sizeof(command), stdin)) break;
-
-        trimNewline(command);
-
-        if (strcmp(command, "exit") == 0) {
-            saveInodeList("inodes_list");
-            break;
-        } else if (strncmp(command, "cd ", 3) == 0) {
-            changeDirectory(command + 3);
-        } else if (strcmp(command, "ls") == 0) {
-            listContents();
-        } else if (strncmp(command, "mkdir ", 6) == 0) {
-            createDirectory(command + 6);
-        } else if (strncmp(command, "touch ", 6) == 0) {
-            createFile(command + 6);
-        } else {
-            printf("Invalid command\n");
-        }
-    }
-    return 0;
-}
+Inode inodeList[MAX_INODES];
+size_t inodeCount = 0;
+uint32_t currentInode = 0;
 
 void trimNewline(char *str) {
     char *pos = strchr(str, '\n');
@@ -134,6 +81,7 @@ void createFile(const char *name) {
     }
     for (size_t i = 0; i < inodeCount; i++) {
         if (inodeList[i].parentInode == currentInode && strcmp(inodeList[i].name, name) == 0) {
+            printf("File already exists\n");
             return;
         }
     }
