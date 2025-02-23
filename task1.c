@@ -72,11 +72,39 @@ void trimNewline(char *str) {
 
 // Loads inode metadata from the inodes_list file
 void loadInodeList(const char *path) {
-    FILE *file = fopen(path, "rb");  // Open file in binary mode
-    if (!file) return;  // If file doesn't exist, assume empty inode list
+    FILE *file = fopen(path, "rb"); // Open file in binary mode
+    if (!file) {                     // If file doesn't exist, assume empty inode list
+        printf("Error: inodes_list file not found. Initializing empty file system.\n");
+        return;
+    }
 
-    inodeCount = fread(inodeList, sizeof(Inode), MAX_INODES, file); // Read inodes
+    // Read the entire inode list from the file
+    inodeCount = fread(inodeList, sizeof(Inode), MAX_INODES, file);
     fclose(file);
+
+    // Validate each inode entry
+    size_t validInodes = 0;
+    for (size_t i = 0; i < inodeCount; i++) {
+        if (inodeList[i].inode >= MAX_INODES) {     // Check if inode number is valid
+            printf("Warning: Invalid inode number %u. Ignoring entry.\n", inodeList[i].inode);
+            continue;
+        }
+        if (inodeList[i].type != 'd' && inodeList[i].type != 'f') {  // Check if type is valid
+            printf("Warning: Invalid type for inode %u. Ignoring entry.\n", inodeList[i].inode);
+            continue;
+        }
+        inodeList[validInodes++] = inodeList[i]; // Keep only valid inodes
+    }
+    inodeCount = validInodes; // Update inode count to exclude invalid entries
+
+    // Ensure that inode 0 exists and is a directory
+    if (inodeCount == 0 || inodeList[0].inode != 0 || inodeList[0].type != 'd') {
+        printf("Error: Root directory (inode 0) is missing or invalid.\n");
+        exit(1);
+    }
+
+    // Set initial working directory
+    currentInode = 0;
 }
 
 // Saves the inode list to the inodes_list file
@@ -155,24 +183,32 @@ void createFile(const char *name) {
         return;
     }
 
-    for (size_t i = 0; i < inodeCount; i++) { // Check if file already exists
-        if (inodeList[i].parentInode == currentInode && strcmp(inodeList[i].name, name) == 0) {
+    // Create a truncated name buffer
+    char truncatedName[NAME_SIZE];
+    strncpy(truncatedName, name, NAME_SIZE - 1);
+    truncatedName[NAME_SIZE - 1] = '\0'; // Ensure null termination
+
+    // Check if a file with the same truncated name already exists
+    for (size_t i = 0; i < inodeCount; i++) {
+        if (inodeList[i].parentInode == currentInode &&
+            strcmp(inodeList[i].name, truncatedName) == 0) {
             printf("File already exists\n");
-            return; // Do nothing if file already exists
+            return; // File already exists, do nothing
         }
     }
 
-    // Create new file inode
-    Inode newFile = {inodeCount, currentInode, 'f', ""}; // Create inode
-    strncpy(newFile.name, name, NAME_SIZE - 1); // Copy name to inode
-    inodeList[inodeCount++] = newFile; // Add inode to inode list
+    // Create new file inode with truncated name
+    Inode newFile = {inodeCount, currentInode, 'f', ""};   // Create inode
+    strncpy(newFile.name, truncatedName, NAME_SIZE - 1);   // Copy name to inode  
+    newFile.name[NAME_SIZE - 1] = '\0'; // Ensure null termination
+    inodeList[inodeCount++] = newFile;   // Add inode to inode list
 
-    // Create an actual file for the inode
+    // Create a file for the inode
     char filename[16];
-    snprintf(filename, sizeof(filename), "%u", newFile.inode); // Create filename
+    snprintf(filename, sizeof(filename), "%u", newFile.inode);  // Create filename
     FILE *file = fopen(filename, "w");
     if (file) {
-        fprintf(file, "%s\n", name); // Store the file name in the file
+        fprintf(file, "%s\n", truncatedName); // Store truncated name
         fclose(file);
     }
 }
