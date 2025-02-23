@@ -118,21 +118,29 @@ void createDirectory(const char *name) {
         return;
     }
     
-    for (size_t i = 0; i < inodeCount; i++) { // Check if directory already exists
-        if (inodeList[i].parentInode == currentInode && strcmp(inodeList[i].name, name) == 0) {
+    // Create a temporary buffer to hold the truncated name
+    char truncatedName[NAME_SIZE];
+    strncpy(truncatedName, name, NAME_SIZE - 1);
+    truncatedName[NAME_SIZE - 1] = '\0'; // Ensure null termination
+
+    // Check if directory with truncated name already exists
+    for (size_t i = 0; i < inodeCount; i++) {
+        if (inodeList[i].parentInode == currentInode &&
+            strcmp(inodeList[i].name, truncatedName) == 0) {
             printf("Directory already exists\n");
             return;
         }
     }
 
-    // Create new directory inode
+    // Create new directory inode with truncated name
     Inode newDir = {inodeCount, currentInode, 'd', ""};
-    strncpy(newDir.name, name, NAME_SIZE - 1); // Copy name to inode
-    inodeList[inodeCount++] = newDir; // Add inode to inode list
+    strncpy(newDir.name, truncatedName, NAME_SIZE - 1); // Copy name to inode
+    newDir.name[NAME_SIZE - 1] = '\0'; // Ensure null termination
+    inodeList[inodeCount++] = newDir;   // Add inode to inode list
 
     // Create an actual file for the directory
     char filename[16];
-    snprintf(filename, sizeof(filename), "%u", newDir.inode); // Create filename
+    snprintf(filename, sizeof(filename), "%u", newDir.inode);  // Create filename
     FILE *file = fopen(filename, "w");
     if (file) {
         fprintf(file, "%u .\n%u ..\n", newDir.inode, currentInode); // Add "." and ".."
