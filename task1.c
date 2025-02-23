@@ -1,21 +1,3 @@
-/*
-He specifically said NOT to 
-1. separate code into header and source files
-2. only use 1 main source code file
-3. NO makefile
-
-*/
-
-
-
-/*
-
-ADD comments:
-1. above function briefly describing it
-2. also for each KEY line of code
-
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
